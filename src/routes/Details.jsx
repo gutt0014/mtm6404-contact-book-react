@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import db from "../utils/db";
 import { doc, getDoc } from "firebase/firestore";
 
 const ContactDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [contact, setContact] = useState(null);
 
   useEffect(() => {
@@ -27,11 +28,27 @@ const ContactDetails = () => {
   }
 
   return (
-    <div>
+    <> 
+    <div className="buttons-container">
+    <button
+      onClick={() => navigate('/')}
+      className="go-back-btn"
+    >
+      &lt; Contacts
+    </button>
+    <button
+      onClick={() => navigate(`/contact/edit/${id}`)}
+      className="edit-btn"
+    >
+      Edit
+    </button>
+  </div>
+    <div className="contact-details">
       <h2>{contact.firstName} {contact.lastName}</h2>
       <p>Email: {contact.email}</p>
       <p>Phone: {contact.phoneNumber}</p>
     </div>
+    </>
   );
 };
 
