@@ -1,34 +1,66 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import './App.css'
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import db from './utils/db';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import './App.css';
 
-function App() {
-  const [count, setCount] = useState(0)
+export const App = () => {
+  const navigate = useNavigate();
+  const [contacts, setContacts] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const fetchContacts = async () => {
+    try {
+      const q = query(collection(db, "contacts"), orderBy("lastName", "asc"));
+      const docSnapshot = await getDocs(q);
+      const data = docSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setContacts(data);
+    } catch (error) {
+      console.error("Error fetching contacts:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchContacts();
+  }, []);
+
+  const filteredContacts = contacts.filter(contact => {
+    const fullName = `${contact.firstName} ${contact.lastName}`.toLowerCase();
+    return fullName.includes(searchTerm.toLowerCase());
+  });
 
   return (
-    <div className="App">
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <>
+      <div className="header-row">
+        <h1>Contact Book</h1>
+        <button className="add-button" onClick={() => navigate('/add')}>+</button>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </div>
-  )
-}
 
-export default App
+      <input className='search-input'
+        type="text"
+        placeholder="Search by name..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)} 
+      />
+
+      <ul>
+        {filteredContacts.length === 0 ? (
+          <p>No contacts found.</p>
+        ) : (
+          filteredContacts.map((contact) => (
+            <li key={contact.id}>
+              <Link to={`/contact/view/${contact.id}`}>
+                {`${contact.firstName} ${contact.lastName}`}
+              </Link>
+            </li>
+          ))
+        )}
+      </ul>
+    </>
+  );
+};
+
+export default App;
